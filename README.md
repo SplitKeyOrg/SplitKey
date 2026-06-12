@@ -45,50 +45,6 @@ operator, not whoever steals the SD card — can watch footage alone.
 
 ---
 
-## See it run
-
-The entire loop, end to end, one command (needs Docker + Rust):
-
-```bash
-./demo-release-loop.sh
-```
-
-It holds a key ceremony (5 booklets, 3-of-5), seals footage into an
-S3-compatible store, then plays three keyholders combining their paper words
-to release exactly one verified day. Other demos:
-
-| Demo | Shows |
-|------|-------|
-| `Sealer/demo.sh` | Seven tampering attacks, each caught **and named** by keyless verification |
-| `Sealer/demo-usbcam.sh` | Live USB-camera footage sealed in RAM → released → playable video (macOS) |
-| `Sealer/sim/` | Docker fleet with WORM object-lock storage — even the storage *admin* can't delete sealed footage |
-| `Examples/splitkey-motion-cam/` | Real deployable appliance: motion-triggered USB camera, sealed archive |
-
----
-
-## What's in this repo
-
-```
-Sealer/        the camera side: sealing daemon, formats, tamper verification
-Ceremony/      ceremony-cli — generates an epoch: manifest + paper booklets
-Keyholders/    keeper-cli — combine shares, verify, release one window
-crates/        sk-shares — the share format both sides speak (spec + test vectors)
-Examples/      deployable camera appliances
-plans/         design notes for what's next (Keyholder desktop app, governance)
-```
-
-The layout enforces the security model: `Sealer/` never depends on the share
-code — a camera *cannot* link the ability to reconstruct keys. It holds only
-public keys and can only ever write.
-
-**Status:** the cryptographic core, camera daemon, ceremony and release
-tooling are built, tested (50+ tests including named tamper drills), and
-validated live — real webcam footage sealed, a real MinIO store, real
-booklet words typed back in. Next up: printable PDF booklets, a desktop
-Keyholder app, and a request/release portal. See `Sealer/docs/10-roadmap.md`.
-
----
-
 ## Glossary
 
 How all the pieces fit, in the order they meet the world:
@@ -151,6 +107,51 @@ How all the pieces fit, in the order they meet the world:
 5. **Paper is a feature** — shares live offline, in pockets, not in clouds
 6. **Community governance** — thresholds, keyholders, and retention are the
    community's choices, not the software's
+
+---
+
+## See it run
+
+The entire loop, end to end, one command (needs Docker + Rust):
+
+```bash
+./demo-release-loop.sh
+```
+
+It holds a key ceremony (5 booklets, 3-of-5), seals footage into an
+S3-compatible store, then plays three keyholders combining their paper words
+to release exactly one verified day. Other demos:
+
+| Demo | Shows |
+|------|-------|
+| `Sealer/demo.sh` | Seven tampering attacks, each caught **and named** by keyless verification |
+| `Sealer/demo-usbcam.sh` | Live USB-camera footage sealed in RAM → released → playable video (macOS) |
+| `Sealer/sim/` | Docker fleet with WORM object-lock storage — even the storage *admin* can't delete sealed footage |
+| `Examples/splitkey-motion-cam/` | Real deployable appliance: motion-triggered USB camera, sealed archive |
+| `Examples/maple-street-secrets/` | Example output from the key generation Ceremony including keyholder booklets.
+
+---
+
+## What's in this repo
+
+```
+Sealer/        the camera side: sealing daemon, formats, tamper verification
+Ceremony/      ceremony-cli — generates an epoch: manifest + paper booklets
+Keyholders/    keeper-cli — combine shares, verify, release one window
+crates/        sk-shares — the share format both sides speak (spec + test vectors)
+Examples/      deployable camera appliances
+plans/         design notes for what's next (Keyholder desktop app, governance)
+```
+
+The layout enforces the security model: `Sealer/` never depends on the share
+code — a camera *cannot* link the ability to reconstruct keys. It holds only
+public keys and can only ever write.
+
+**Status:** the cryptographic core, camera daemon, ceremony and release
+tooling are built, tested (50+ tests including named tamper drills), and
+validated live — real webcam footage sealed, a real MinIO store, real
+booklet words typed back in. Next up: printable PDF booklets, a desktop
+Keyholder app, and a request/release portal. See `Sealer/docs/10-roadmap.md`.
 
 ---
 
