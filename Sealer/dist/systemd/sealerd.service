@@ -1,0 +1,33 @@
+[Unit]
+Description=SplitKey Sealer daemon
+Documentation=https://github.com/splitkey/splitkey
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/sealerd --config /etc/splitkey/sealer.toml
+Restart=always
+RestartSec=5
+
+# The daemon needs only: its state dir, the watch/clips dir, and the network.
+User=splitkey
+Group=splitkey
+StateDirectory=splitkey
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/splitkey
+# Add your clips directory here if using watch mode, e.g.:
+# ReadWritePaths=/var/lib/splitkey /dev/shm/clips
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+# Pipe mode spawns the recorder (ffmpeg); it needs the camera device:
+# SupplementaryGroups=video
+# DeviceAllow=/dev/video0 rw
+# PrivateDevices must stay off for camera access in pipe mode.
+
+[Install]
+WantedBy=multi-user.target

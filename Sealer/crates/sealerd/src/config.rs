@@ -47,12 +47,45 @@ pub struct Device {
 pub struct Source {
     pub mode: SourceMode,
     pub watch: Option<Watch>,
+    pub pipe: Option<Pipe>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum SourceMode {
     Watch,
+    Pipe,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Pipe {
+    /// Byte-stream format: cut points are aligned to MPEG-TS packets for
+    /// "mpegts"; "raw"/"h264-es" cut at arbitrary offsets (decoder resync).
+    #[serde(default = "default_pipe_format")]
+    pub format: PipeFormat,
+    /// Recorder command (run via `sh -c`); its stdout is the stream.
+    /// Omitted → sealerd reads its own stdin.
+    #[serde(default)]
+    pub command: Option<String>,
+    /// Restart backoff after the recorder exits (doubles up to 30 s).
+    #[serde(default = "default_restart_secs")]
+    pub restart_secs: u64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum PipeFormat {
+    Mpegts,
+    H264Es,
+    Raw,
+}
+
+fn default_pipe_format() -> PipeFormat {
+    PipeFormat::Mpegts
+}
+fn default_restart_secs() -> u64 {
+    2
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -87,6 +120,11 @@ pub enum AfterSeal {
 pub struct Sealing {
     pub suite: String,
     pub chunk_bytes: ByteSize,
+    /// Pipe mode: cut a segment after this many seconds...
+    pub segment_max_secs: u64,
+    /// ...or this many bytes, whichever comes first (window boundaries
+    /// always cut). Watcher mode seals whole files and ignores these.
+    pub segment_max_bytes: ByteSize,
     pub manifest_exhausted: ManifestExhausted,
 }
 
@@ -95,6 +133,8 @@ impl Default for Sealing {
         Self {
             suite: sks_format::SUITE_XCHACHA.into(),
             chunk_bytes: ByteSize(sks_format::DEFAULT_CHUNK_BYTES as u64),
+            segment_max_secs: 60,
+            segment_max_bytes: ByteSize(16 * 1024 * 1024),
             manifest_exhausted: ManifestExhausted::default(),
         }
     }
@@ -248,6 +288,12 @@ impl Config {
     pub fn validate(&self) -> Result<()> {
         if self.source.mode == SourceMode::Watch && self.source.watch.is_none() {
             bail!("source.mode = \"watch\" requires a [source.watch] section");
+        }
+        if self.source.mode == SourceMode::Pipe && self.source.pipe.is_none() {
+            bail!("source.mode = \"pipe\" requires a [source.pipe] section");
+        }
+        if self.sealing.segment_max_secs == 0 || self.sealing.segment_max_bytes.0 < 4096 {
+            bail!("sealing.segment_max_secs/bytes too small");
         }
         if self.sealing.suite != sks_format::SUITE_XCHACHA {
             bail!("unsupported sealing.suite '{}' (only {} is implemented)",

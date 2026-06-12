@@ -44,13 +44,27 @@ The product's nucleus, no daemon yet.
   watcher, Prometheus `/metrics`, spool quota enforcement, per-object
   retention headers, fault injection automated in CI.
 
-## Phase 3 — Reference hardware (2–3 weeks)
+## Phase 3 — Reference hardware (adapted: USB cam + Linux PC) 🔶 in progress
 
-- Pi Zero 2 W: pipe mode from `rpicam-vid` (plaintext never on disk),
-  aarch64-musl release build, systemd unit, install script.
-- 72 h soak on the lab rig; RAM/CPU/wear numbers published.
-- **Demo: physical camera on a shelf, sealing to a $5/mo bucket; the
-  "stolen SD card" party trick — pull the card, show nothing readable.**
+Pivoted from Pi Zero 2 W (none on hand) to USB cameras — same pipeline,
+different capture frontend; the Pi port later is only a build target +
+`rpicam-vid` command string.
+
+- ✅ **Pipe mode (Mode 2)**: `[source.pipe]` spawns/supervises a recorder
+  command (restart with backoff), RAM segmenter with size/time/window cuts
+  aligned to MPEG-TS packets, `source_lost`/`source_restored` chain events,
+  shutdown drain seals + uploads the final partial segment.
+- ✅ **Live demo on real hardware** (`demo-usbcam.sh`): macOS USB cam →
+  ffmpeg (hardware H.264) → pipe → sealed 1080p segments → keyless verify →
+  simulated release → playable `.ts`. Validated end-to-end.
+- ✅ **Linux deployment kit** (`dist/`, `recipes/`): static x86_64-musl
+  build script (Docker), hardened systemd unit, INSTALL.md, example config;
+  recipes for **motion-triggered** (`motion` daemon + tmpfs handoff — the
+  "detection stays out of Sealer" composition) and **continuous** (V4L2
+  pipe) deployments.
+- ⬜ Deploy + soak on the actual Linux PC; RAM/CPU numbers.
+- ⬜ Pi Zero 2 W / aarch64 build when hardware is available; the "stolen
+  SD card" party trick.
 
 ## Phase 4 — Release loop closes (2–3 weeks, coordinates with Keyholder plan)
 

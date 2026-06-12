@@ -31,6 +31,14 @@ pub struct SealEngine {
 pub enum SealInput<'a> {
     /// Footage from a watched file (timestamps from mtime).
     File { path: &'a Path, mtime_ms: i64 },
+    /// Footage bytes straight from a pipe — plaintext never touches disk.
+    /// Timestamps are real capture start/end times.
+    Bytes {
+        data: Vec<u8>,
+        ts_start_ms: i64,
+        ts_end_ms: i64,
+        content_meta: BTreeMap<String, String>,
+    },
     /// A chain event (boot, heartbeat, ...) — body is a small CBOR record,
     /// sealed and chained exactly like footage (docs/04-tamper-evidence.md).
     Event { kind: &'a str, detail: serde_json::Value },
@@ -78,7 +86,7 @@ impl SealEngine {
 
     /// Seal one input into the spool. Returns the spooled segment path.
     pub fn seal(&mut self, input: SealInput<'_>) -> Result<SealOutcome> {
-        let (data, ts_ms, content_meta): (Vec<u8>, i64, BTreeMap<String, String>) = match input {
+        let (data, ts_start_ms, ts_end_ms, content_meta): (Vec<u8>, i64, i64, BTreeMap<String, String>) = match input {
             SealInput::File { path, mtime_ms } => {
                 let data = fs::read(path).with_context(|| format!("reading {}", path.display()))?;
                 let mut meta = BTreeMap::new();
@@ -88,7 +96,10 @@ impl SealEngine {
                 if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
                     meta.insert("source_name".into(), name.to_string());
                 }
-                (data, mtime_ms, meta)
+                (data, mtime_ms, mtime_ms, meta)
+            }
+            SealInput::Bytes { data, ts_start_ms, ts_end_ms, content_meta } => {
+                (data, ts_start_ms, ts_end_ms, content_meta)
             }
             SealInput::Event { kind, detail } => {
                 let now = Self::now_ms();
@@ -100,12 +111,13 @@ impl SealEngine {
                 let mut meta = BTreeMap::new();
                 meta.insert("kind".into(), "chain-event".into());
                 meta.insert("event".into(), kind.to_string());
-                (body, now, meta)
+                (body, now, now, meta)
             }
         };
 
         let manifest = &self.device.manifest;
-        let window = sealer_keys::Manifest::window_index_for(ts_ms / 1000, manifest.body.window_secs);
+        // A segment belongs to the window containing its first frame.
+        let window = sealer_keys::Manifest::window_index_for(ts_start_ms / 1000, manifest.body.window_secs);
         let (wk_pub, exhausted) = manifest.pub_for_window(window)?;
         if exhausted {
             match self.on_exhausted {
@@ -140,8 +152,8 @@ impl SealEngine {
             window_index: window,
             segment_seq: self.chain.next_seq,
             boot_id: self.boot_id,
-            ts_wall_start: ts_ms,
-            ts_wall_end: ts_ms,
+            ts_wall_start: ts_start_ms,
+            ts_wall_end: ts_end_ms,
             ts_mono: self.started.elapsed().as_nanos() as u64,
             clock_confidence: ClockConfidence::Synced,
             prev_link: hex::decode(&self.chain.prev_link_hex)?

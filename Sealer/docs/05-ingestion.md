@@ -25,7 +25,7 @@ Frigate, vendor firmware, a dashcam's SD card mount…) writes segment files.
 - Crash rule: an unsealed file found at startup is sealed immediately
   (it's footage, not garbage), with a chain event noting recovery.
 
-## Mode 2 — Pipe / stdin (v1.5, first plaintext-never-on-disk mode)
+## Mode 2 — Pipe / stdin ✅ implemented (first plaintext-never-on-disk mode)
 
 `rpicam-vid ... -o - | sealerd --source pipe` or a FIFO. The recorder
 streams an H.264/H.265 elementary stream or MPEG-TS; the Segmenter cuts in
@@ -85,7 +85,9 @@ exists outside the encode pipeline's RAM.
 
 | Platform | Likely source |
 |----------|---------------|
-| Raspberry Pi Zero 2 W + Camera Module 3 | Mode 2 pipe from `rpicam-vid` (HW H.264 encode) — primary demo |
+| USB cam on macOS (dev) | Mode 2 pipe from ffmpeg avfoundation — see `demo-usbcam.sh` ✅ |
+| USB cam on Linux | Mode 2 pipe from ffmpeg v4l2 (continuous) or Mode 1 watch + `motion` + tmpfs (motion-triggered) — see `recipes/` |
+| Raspberry Pi Zero 2 W + Camera Module 3 | Mode 2 pipe from `rpicam-vid` (HW H.264 encode) — when hardware available |
 | Luckfox Pico (RV1106) | Mode 4 eventually (rkipc hook) — Mode 2 from venc sample apps first |
 | OpenIPC devices | Mode 2/4 via majestic streamer output |
 | Windows + existing NVR (Blue Iris etc.) | Mode 1 watcher on the clip directory |

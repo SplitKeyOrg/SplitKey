@@ -1,0 +1,52 @@
+# SplitKey Sealer — example deployment config.
+# Full reference: Sealer/docs/07-configuration.md
+# Pick ONE [source] mode; both example blocks are shown below.
+
+[community]
+id           = "my-community"
+manifest     = "/etc/splitkey/manifest.skm"   # from your key ceremony
+admin_pubkey = "/etc/splitkey/admin.pub"      # pinned at enrollment
+
+[device]
+camera_id = "front-door"
+state_dir = "/var/lib/splitkey"
+
+# ── Mode A: continuous USB camera, plaintext only in RAM ─────────────
+[source]
+mode = "pipe"
+
+[source.pipe]
+format  = "mpegts"
+command = "ffmpeg -hide_banner -loglevel error -f v4l2 -framerate 30 -video_size 1280x720 -i /dev/video0 -c:v libx264 -preset veryfast -tune zerolatency -g 30 -f mpegts -"
+# Camera SoCs with hardware encoders: swap libx264 for h264_v4l2m2m etc.
+
+# ── Mode B: motion-triggered via the `motion` daemon + tmpfs ─────────
+# (comment out Mode A above, uncomment this, see recipes/linux-motion.md)
+# [source]
+# mode = "watch"
+# [source.watch]
+# path        = "/dev/shm/splitkey-clips"   # tmpfs: plaintext never on flash
+# ready_glob  = "*.mkv"
+# stable_secs = 2
+# after_seal  = "delete"
+
+[sealing]
+segment_max_secs  = 60
+segment_max_bytes = "16MB"
+
+[chain]
+heartbeat_secs = 300
+
+[[storage]]
+type       = "s3"
+endpoint   = "https://s3.us-west-000.backblazeb2.com"  # or MinIO/R2/AWS
+bucket     = "my-community-sealed"
+credential = "file:/etc/splitkey/s3.secret"            # "ACCESS_KEY_ID:SECRET"
+
+# Optional second sink (withholding defense / local NAS):
+# [[storage]]
+# type = "fs"
+# path = "/mnt/nas/sealed"
+
+[log]
+level = "info"
