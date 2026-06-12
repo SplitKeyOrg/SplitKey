@@ -56,9 +56,9 @@ pub enum ChainProblem {
     IdentityMismatch,
     #[error("device key id changed mid-chain (re-keyed device or forgery; requires enrollment-record check)")]
     DeviceKeyChanged,
-    #[error("wall-clock goes backwards vs predecessor while monotonic increases (clock step not declared)")]
+    #[error("capture wall-clock goes backwards vs predecessor within one boot (backlog seal or clock step)")]
     ClockAnomaly,
-    #[error("window index decreases while sequence increases (impossible ordering)")]
+    #[error("window index decreases while sequence increases (out-of-order capture times)")]
     WindowRegression,
 }
 
@@ -68,7 +68,13 @@ pub enum ChainProblem {
 pub struct ChainReport {
     /// Verified contiguous spans as (first_seq, last_seq).
     pub spans: Vec<(u64, u64)>,
+    /// Integrity failures: evidence of tampering, loss, or forgery.
     pub findings: Vec<ChainFinding>,
+    /// Informational observations that are NOT integrity failures — e.g.
+    /// capture-time regressions, which occur legitimately when a backlog is
+    /// sealed after a reboot (header timestamps are capture times, and the
+    /// seq chain — not the wall clock — is what orders segments).
+    pub notes: Vec<ChainFinding>,
 }
 
 impl ChainReport {
@@ -84,10 +90,11 @@ impl ChainReport {
 /// nothing, the chain does.
 pub fn verify_chain(segments: &[(&ParsedSegment, [u8; 32])]) -> ChainReport {
     let mut findings = Vec::new();
+    let mut notes = Vec::new();
     let mut spans: Vec<(u64, u64)> = Vec::new();
 
     if segments.is_empty() {
-        return ChainReport { spans, findings };
+        return ChainReport { spans, findings, notes };
     }
 
     let mut ordered: Vec<&(&ParsedSegment, [u8; 32])> = segments.iter().collect();
@@ -171,19 +178,20 @@ pub fn verify_chain(segments: &[(&ParsedSegment, [u8; 32])]) -> ChainReport {
                 spans.push((span_start, pseq));
                 span_start = seq;
             }
-            // Same boot: monotonic must increase; wall-clock regression
-            // with the same boot_id is an undeclared clock step.
+            // Capture-time regressions are NOTES, not failures: header
+            // timestamps are capture times (file mtime in watcher mode),
+            // and sealing a backlog after boot legitimately runs backwards.
             if p.header.boot_id == pp.header.boot_id
                 && p.header.ts_mono > pp.header.ts_mono
-                    && p.header.ts_wall_start < pp.header.ts_wall_start
-                {
-                    findings.push(ChainFinding {
-                        seq,
-                        problem: ChainProblem::ClockAnomaly,
-                    });
-                }
+                && p.header.ts_wall_start < pp.header.ts_wall_start
+            {
+                notes.push(ChainFinding {
+                    seq,
+                    problem: ChainProblem::ClockAnomaly,
+                });
+            }
             if p.header.window_index < pp.header.window_index {
-                findings.push(ChainFinding {
+                notes.push(ChainFinding {
                     seq,
                     problem: ChainProblem::WindowRegression,
                 });
@@ -193,5 +201,5 @@ pub fn verify_chain(segments: &[(&ParsedSegment, [u8; 32])]) -> ChainReport {
     }
     spans.push((span_start, prev.0.header.segment_seq));
 
-    ChainReport { spans, findings }
+    ChainReport { spans, findings, notes }
 }

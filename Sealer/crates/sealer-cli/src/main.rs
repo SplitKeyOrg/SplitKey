@@ -380,14 +380,20 @@ fn inspect_cmd(file: &Path, json: bool) -> Result<()> {
 }
 
 fn collect_sks(path: &Path) -> Result<Vec<PathBuf>> {
-    let mut files = Vec::new();
-    if path.is_dir() {
-        for e in fs::read_dir(path)? {
+    fn walk(dir: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
+        for e in fs::read_dir(dir)? {
             let p = e?.path();
-            if p.extension().is_some_and(|x| x == "sks") {
-                files.push(p);
+            if p.is_dir() {
+                walk(&p, out)?; // archives use nested community/camera/epoch/window/ layout
+            } else if p.extension().is_some_and(|x| x == "sks") {
+                out.push(p);
             }
         }
+        Ok(())
+    }
+    let mut files = Vec::new();
+    if path.is_dir() {
+        walk(path, &mut files)?;
         files.sort();
     } else {
         files.push(path.to_path_buf());
@@ -432,6 +438,7 @@ fn verify_cmd(path: &Path, device_pub: &Path, json: bool) -> Result<()> {
             "segment_failures": seg_failures.iter().map(|(f, e)| serde_json::json!({"file": f, "error": e})).collect::<Vec<_>>(),
             "chain_spans": report.spans,
             "chain_findings": report.findings.iter().map(|f| serde_json::json!({"seq": f.seq, "problem": f.problem.to_string()})).collect::<Vec<_>>(),
+            "chain_notes": report.notes.iter().map(|f| serde_json::json!({"seq": f.seq, "note": f.problem.to_string()})).collect::<Vec<_>>(),
             "ok": ok,
         }))?);
     } else {
@@ -444,6 +451,9 @@ fn verify_cmd(path: &Path, device_pub: &Path, json: bool) -> Result<()> {
         }
         for f in &report.findings {
             println!("  CHAIN FINDING at seq {}: {}", f.seq, f.problem);
+        }
+        for n in &report.notes {
+            println!("  note at seq {}: {}", n.seq, n.problem);
         }
         println!("{}", if ok { "OK: chain verifies; no tampering detected" } else { "FAILED: see findings above" });
     }

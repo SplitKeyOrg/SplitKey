@@ -1,0 +1,40 @@
+[package]
+name = "sealerd"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "sealerd"
+path = "src/lib.rs"
+
+[[bin]]
+name = "sealerd"
+path = "src/bin/sealerd.rs"
+
+[[bin]]
+name = "sealer"
+path = "src/bin/sealer.rs"
+
+[dependencies]
+sks-format = { workspace = true }
+sealer-crypto = { workspace = true }
+sealer-chain = { workspace = true }
+sealer-keys = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+ciborium = { workspace = true }
+serde_bytes = { workspace = true }
+hex = { workspace = true }
+tokio = { workspace = true }
+toml = { workspace = true }
+object_store = { workspace = true }
+glob = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

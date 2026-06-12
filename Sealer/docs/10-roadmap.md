@@ -29,16 +29,20 @@ The product's nucleus, no daemon yet.
 - **Demo: seal a file, tamper with it seven different ways, watch
   `sks verify` name each attack.** This demo is also the pitch.
 
-## Phase 2 — Daemon MVP: watcher → S3 (3–4 weeks)
+## Phase 2 — Daemon MVP: watcher → S3 ✅ (core complete)
 
-- `sealerd` pipeline with watcher source, spool, S3 + fs sinks.
-- Config file + `sealer doctor/status/enroll`.
-- Chain events (boot, source_lost, heartbeat); crash-safety invariants
-  implemented and chaos-tested.
-- Docker compose simulation environment ([09](09-platforms-builds-testing.md))
-  with fault injection in CI.
-- **Demo: `docker compose up` shows live camera-sim → sealed segments in
-  MinIO with object lock; kill -9 anything and the chain stays green.**
+- ✅ `sealerd` pipeline with watcher source (polling), spool, S3 + fs sinks,
+  signed `.skc` catalog records.
+- ✅ Config file (`deny_unknown_fields`) + `sealer doctor/status/enroll`.
+- ✅ Chain events (boot, heartbeat); crash-safety invariants implemented and
+  tested (kill -9 → chain resumes with declared boot event).
+- ✅ Docker compose simulation (`sim/`): MinIO with object lock + versioning,
+  camera-sim, continuous keyless verifier; chaos drills validated manually
+  (tamper → red, WORM delete denied even for storage admin).
+- **Demo (validated): `docker compose up --build` in `sim/`.**
+- Remaining for later phases: `source_lost/restored` events, inotify
+  watcher, Prometheus `/metrics`, spool quota enforcement, per-object
+  retention headers, fault injection automated in CI.
 
 ## Phase 3 — Reference hardware (2–3 weeks)
 

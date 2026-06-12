@@ -1,0 +1,99 @@
+# SplitKey Sealer simulation (docs/09-platforms-builds-testing.md):
+#   camera-sim → sealerd (watcher) → MinIO (object-locked) + fs archive
+#                                  → verifier (keyless chain audit loop)
+#
+#   docker compose up --build
+#
+# Chaos ideas (see sim/README.md): kill -9 sealerd mid-segment, pause minio,
+# fill the spool, delete archive objects — the verifier must notice anything
+# that matters.
+
+services:
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "19001:9001" # web console at http://localhost:19001 (minioadmin/minioadmin)
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 minioadmin minioadmin &&
+      (mc mb --with-lock local/sealed || true) &&
+      (mc retention set --default GOVERNANCE 30d local/sealed || true) &&
+      echo 'minio-init: bucket sealed ready (object lock on)'"
+
+  ceremony:
+    build:
+      context: ..
+      dockerfile: sim/Dockerfile
+    entrypoint: ["/sim/ceremony-init.sh"]
+    volumes:
+      - community:/community
+      - ./scripts:/sim:ro
+
+  sealerd:
+    build:
+      context: ..
+      dockerfile: sim/Dockerfile
+    entrypoint: ["/sim/sealerd-entry.sh"]
+    environment:
+      SEALER_S3_CRED: "minioadmin:minioadmin"
+    depends_on:
+      ceremony:
+        condition: service_completed_successfully
+      minio-init:
+        condition: service_completed_successfully
+    volumes:
+      - community:/community:ro
+      - clips:/clips
+      - archive:/archive
+      - state:/state
+      - ./config:/etc/splitkey:ro
+      - ./scripts:/sim:ro
+    restart: unless-stopped
+
+  camera:
+    image: alpine:3
+    entrypoint: ["/sim/camera-sim.sh"]
+    environment:
+      INTERVAL: "10"
+    depends_on:
+      - sealerd
+    volumes:
+      - clips:/clips
+      - ./scripts:/sim:ro
+    restart: unless-stopped
+
+  verifier:
+    build:
+      context: ..
+      dockerfile: sim/Dockerfile
+    entrypoint: ["/sim/verifier.sh"]
+    depends_on:
+      - sealerd
+    volumes:
+      - archive:/archive:ro
+      - state:/state:ro
+      - ./scripts:/sim:ro
+
+volumes:
+  minio-data:
+  community:
+  clips:
+  archive:
+  state:

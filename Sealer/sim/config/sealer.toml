@@ -1,0 +1,36 @@
+# Simulation deployment config (docs/07-configuration.md).
+
+[community]
+id           = "sim-community"
+manifest     = "/community/manifest.skm"
+admin_pubkey = "/community/admin.pub"
+
+[device]
+camera_id = "sim-cam-1"
+state_dir = "/state"
+
+[source]
+mode = "watch"
+
+[source.watch]
+path        = "/clips"
+ready_glob  = "*.mp4"
+stable_secs = 2
+poll_ms     = 500
+after_seal  = "delete"
+
+[chain]
+heartbeat_secs = 60
+
+[[storage]]
+type = "fs"
+path = "/archive"
+
+[[storage]]
+type       = "s3"
+endpoint   = "http://minio:9000"
+bucket     = "sealed"
+credential = "env:SEALER_S3_CRED"
+
+[log]
+level = "info"
