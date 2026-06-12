@@ -29,6 +29,18 @@ pub struct ChainStateFile {
     pub camera_id: String,
     pub next_seq: u64,
     pub prev_link_hex: String,
+    /// Seq range sealed into the current (not yet closed) window — feeds the
+    /// `window_close` rollup event. Absent in pre-rollup state files.
+    #[serde(default)]
+    pub window: Option<WindowTracker>,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct WindowTracker {
+    pub index: u64,
+    pub min_seq: u64,
+    pub max_seq: u64,
+    pub count: u64,
 }
 
 fn write_0600(path: &Path, bytes: &[u8]) -> Result<()> {
@@ -105,6 +117,7 @@ pub fn load_chain_state(state_dir: &Path, camera_id: &str) -> Result<ChainStateF
             camera_id: camera_id.to_string(),
             next_seq: 0,
             prev_link_hex: hex::encode(sks_format::GENESIS_LINK),
+            window: None,
         });
     }
     let s: ChainStateFile = serde_json::from_slice(&fs::read(&path)?)

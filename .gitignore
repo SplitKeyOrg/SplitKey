@@ -1,1 +1,4 @@
+/target
 future-ignore-now/
+Sealer/dist/splitkey-sealer-x86_64-linux/
+Sealer/dist/*.tar.gz

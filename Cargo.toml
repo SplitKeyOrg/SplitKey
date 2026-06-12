@@ -1,0 +1,33 @@
+# Root workspace: the release-loop codebases (Ceremony, Keyholders) and the
+# share-format contract crate. Sealer/ is its own workspace (excluded) —
+# these crates path-dep into Sealer/crates/*, never the reverse: the camera
+# cannot link share-handling code.
+
+[workspace]
+resolver = "2"
+members = ["crates/sk-shares", "Ceremony/ceremony-cli", "Keyholders/keeper-cli"]
+exclude = ["Sealer"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+sk-shares = { path = "crates/sk-shares" }
+sealer-crypto = { path = "Sealer/crates/sealer-crypto" }
+sealer-keys = { path = "Sealer/crates/sealer-keys" }
+sealer-chain = { path = "Sealer/crates/sealer-chain" }
+sks-format = { path = "Sealer/crates/sks-format" }
+sealerd = { path = "Sealer/crates/sealerd" }
+anyhow = "1"
+thiserror = "2"
+clap = { version = "4", features = ["derive"] }
+hex = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ciborium = "0.2"
+serde_bytes = "0.11"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+object_store = { version = "0.12", features = ["aws"] }
+tempfile = "3"

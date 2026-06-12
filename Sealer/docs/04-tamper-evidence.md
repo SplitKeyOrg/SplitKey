@@ -44,6 +44,10 @@ chained exactly like footage):
 - `heartbeat` — emitted every N minutes when no footage is being produced
   (motion-triggered cameras), so silence has a maximum credible duration.
   **A camera that records nothing still proves it was alive.**
+- `window_close` — first segment after a window rollover; its plaintext
+  `content_meta` pins the closed window's `min_seq`/`max_seq`/`count`, so
+  truncating a past window's tail requires deleting every later window too
+  ([06-storage.md](06-storage.md)).
 
 Gap analysis then becomes precise: any time range is covered by footage,
 covered by a declared event, or **unexplained** — and only the last category

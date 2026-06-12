@@ -10,15 +10,11 @@ Rough Process:
   * prints out a set of keys, they key holdler goes and picks them up, no one else sees them
 
 When incident occures, you can call in the key codes for that window.
-Preferably the keys are words, BIP39?   Note, need multi-lingual too.
-
-
-Might as well print out all possible days of a year incase a leap year occures.
-
+Preferably the keys are words, SLIP-0039.   Note, need multi-lingual in the future.
 
 
 Key Concepts
-Daily keypair — one unique keypair per camera per day. Encrypts that day's footage only. Unlocking one day reveals nothing about any other day.
+Daily keys — one unique keys per day.  Unlocking one day reveals nothing about any other day.
 Keyholders — trusted community members who hold SSS shares. A quorum of any 2-of-N can unlock a specific day.
 Annual ceremony — public meeting where that year's daily private keys are split into shares and distributed to keyholders on paper.
 
@@ -43,8 +39,7 @@ Annual Ceremony
 
 Held publicly, town hall or similar
 Air-gapped machine, thermal or laser printer
-Each keyholder receives printed cards with BIP39 encoded shares
-One card per day, sealed by month
+Each keyholder receives printed cards with share secret words
 Keyholders sign public verification sheet
 Machine and media destroyed after ceremony
 

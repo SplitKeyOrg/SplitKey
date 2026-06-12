@@ -38,9 +38,18 @@ keyholders receive a printed booklet of per-window share codes (BIP39 word
 encoding, multilingual wordlists) and "call in" only the codes for the
 requested window.
 
+> **Share format (Phase 4, spec in `../../crates/sk-shares/README.md`):**
+> what gets split is a **16-byte window secret**, hashed to the X25519 seed
+> (X25519 ≈ 128-bit security, so 32-byte secrets add words, not strength).
+> One booklet line = 14 BIP39 words: x-coordinate ‖ 16-byte share ‖ 2-byte
+> checksum that binds community + epoch + window index. The kdf gains the
+> 16-byte intermediate step when `ceremony-cli` lands; existing sim
+> manifests are regenerated (all throwaway).
+
 **Print volume math** (drives the window-length decision):
 a 32-byte share ≈ 24 BIP39 words. Plus share metadata (window ID, share
-index, checksum) — call it one line per window.
+index, checksum) — call it one line per window. (With the final 16-byte
+format above: 14 words/line, ~half the pages shown below.)
 
 | Window length | Windows/epoch (~12 mo) | Booklet size per keyholder |
 |---------------|------------------------|----------------------------|

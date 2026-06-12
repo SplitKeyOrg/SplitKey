@@ -1,0 +1,10 @@
+[package]
+name = "sk-shares"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "SplitKey Shamir shares + mnemonic word encoding (see README.md spec)"
+
+[dependencies]
+sealer-crypto = { workspace = true }
+thiserror = { workspace = true }

@@ -1,0 +1,21 @@
+[package]
+name = "ceremony-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "ceremony"
+path = "src/main.rs"
+
+[dependencies]
+sk-shares = { workspace = true }
+sealer-crypto = { workspace = true }
+sealer-keys = { workspace = true }
+anyhow = { workspace = true }
+clap = { workspace = true }
+hex = { workspace = true }
+serde_bytes = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

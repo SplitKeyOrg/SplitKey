@@ -66,14 +66,28 @@ different capture frontend; the Pi port later is only a build target +
 - ⬜ Pi Zero 2 W / aarch64 build when hardware is available; the "stolen
   SD card" party trick.
 
-## Phase 4 — Release loop closes (2–3 weeks, coordinates with Keyholder plan)
+## Phase 4 — Release loop closes ✅ (core complete)
 
-- Catalog-as-objects: `.skc` record + per-window index writer in `sealerd`
-  (no catalog service — decided, [06](06-storage.md)).
-- `release-sim`: reconstruct a window key from test shares, enumerate a
-  window straight from the bucket via `.skc` records, decrypt, `sks verify`
-  the lot. End-to-end proof of the whole SplitKey concept with no GUI apps
-  yet — **this is the milestone that makes the project real to outsiders.**
+- ✅ Catalog-as-objects: `.skc` records (Phase 2) + per-window rollup as a
+  `window_close` chain event ([06](06-storage.md); no catalog service —
+  decided).
+- ✅ New top-level codebases (same repo, path-deps into `Sealer/crates/*`;
+  Sealer never depends back — the camera can't even link share-handling
+  code): `crates/sk-shares` (GF(2⁸) Shamir + 14-word booklet lines, spec +
+  test vectors in its README), `Ceremony/` (`ceremony new`: manifest +
+  booklets, from-disk self-check, CRK destroyed), `Keyholders/`
+  (`keeper combine/release/list` — the future Tauri app wraps it).
+  Derivation updated: 16-byte window secrets, hashed to the X25519 seed
+  ([02](02-key-management.md)).
+- ✅ Full-loop integration tests (`Keyholders/keeper-cli/tests/full_loop.rs`):
+  clean release; tail-withholding named via the rollup; share threshold +
+  wrong-line checksum failures.
+- ✅ Live drill (`../demo-release-loop.sh`, validated): ceremony → sealerd →
+  MinIO S3 → 3 booklets combine → release one verified window.
+  End-to-end proof of the whole SplitKey concept with no GUI apps
+  yet — **the milestone that makes the project real to outsiders.**
+- ⬜ Real-ceremony procedure doc + booklet PDF/QR rendering (Keyholder-app
+  phase; `plans/community-signing.md`).
 
 ## Phase 5
 - RTSP source mode (`retina`), fMP4 muxing → seal ONVIF cameras.

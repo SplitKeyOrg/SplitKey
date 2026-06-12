@@ -1,0 +1,28 @@
+[package]
+name = "keeper-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "keeper"
+path = "src/main.rs"
+
+[dependencies]
+sk-shares = { workspace = true }
+sealer-crypto = { workspace = true }
+sealer-keys = { workspace = true }
+sealer-chain = { workspace = true }
+sks-format = { workspace = true }
+anyhow = { workspace = true }
+clap = { workspace = true }
+hex = { workspace = true }
+serde_json = { workspace = true }
+ciborium = { workspace = true }
+tokio = { workspace = true }
+object_store = { workspace = true }
+
+[dev-dependencies]
+sealerd = { workspace = true }
+ceremony-cli = { path = "../../Ceremony/ceremony-cli" }
+tempfile = { workspace = true }

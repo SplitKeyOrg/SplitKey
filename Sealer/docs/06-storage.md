@@ -69,9 +69,22 @@ the catalog record defined in [03-segment-format.md](03-segment-format.md).
 
 - The catalog is **objects, not a service**: alongside each uploaded
   segment the Sealer writes a small device-signed CBOR catalog record
-  (`<seq>.skc`), and periodically a per-window rollup index
-  (`<window>/index.skc`) so release tooling can enumerate a window with one
-  GET instead of a large LIST.
+  (`<seq>.skc`). Window-scoped enumeration is a prefix LIST (≤ ~1440
+  segments/day at 60 s cuts — one or two LIST pages); a rollup index object
+  is a future optimization only.
+- **Per-window rollup = `window_close` chain event** ✅: on window rollover
+  the first segment sealed into the new window is a chained event whose
+  *plaintext, header-signed* `content_meta` records the closed window's
+  `min_seq`/`max_seq`/`count` (and it is copied into that segment's `.skc`).
+  This closes the tail-truncation gap on non-WORM storage: the chain's
+  seq-gap check catches deletions in the middle of history, but a deleted
+  *tail* of window W just looks like the camera stopped — unless the next
+  window's close event pins W's true `max_seq`. An attacker must now delete
+  every later window too (a full-suffix wipe), which heartbeats and
+  monitoring make conspicuous. Being a chained segment, the close event
+  itself can't be dropped without creating a seq gap. Backlog segments
+  sealed into an already-closed window carry seqs above the recorded
+  `max_seq`; they remain covered by the ordinary seq-gap check.
 - The Release/Keyholder tooling works directly against the bucket: list
   prefix → read `.skc` records → fetch the referenced `.sks` blobs. No
   server to run, nothing new to trust.
