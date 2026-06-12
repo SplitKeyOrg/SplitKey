@@ -1,0 +1,12 @@
+# Binaries are fetched/built, never committed (see fetch-binaries.sh).
+/bin/*
+!/bin/.gitkeep
+
+# Runtime-generated: device keys, ceremony artifacts, sealed output, clips.
+/config/ceremony/
+/config/state/
+/config/manifest.skm
+/config/admin.pub
+/archive/*
+!/archive/.gitkeep
+/extracted/

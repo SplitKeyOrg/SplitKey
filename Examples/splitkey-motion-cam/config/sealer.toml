@@ -1,0 +1,35 @@
+# SplitKey Sealer — motion-triggered camera appliance (watch mode).
+# All paths are container-internal; the host bind-mounts supply them.
+
+[community]
+id           = "my-community"
+manifest     = "/config/manifest.skm"   # written by the `init` step (ceremony-sim)
+admin_pubkey = "/config/admin.pub"       # pinned at enrollment
+
+[device]
+camera_id = "front-door"
+state_dir = "/config/state"               # device.key/.pub + chain head (in the deploy dir)
+
+# Mode B: motion daemon → tmpfs handoff → sealer. Plaintext never on flash.
+[source]
+mode = "watch"
+
+[source.watch]
+path        = "/dev/shm/splitkey-clips"   # container tmpfs (RAM)
+ready_glob  = "*.mkv"
+stable_secs = 2                           # wait for motion to finish the file
+after_seal  = "delete"                    # drop plaintext as soon as it's sealed
+
+[sealing]
+segment_max_secs  = 60
+segment_max_bytes = "16MB"
+
+[chain]
+heartbeat_secs = 300                      # provable aliveness during quiet hours
+
+[[storage]]
+type = "fs"
+path = "/archive"                          # → ./archive in the deploy dir (host)
+
+[log]
+level = "info"

@@ -1,0 +1,50 @@
+# SplitKey motion-triggered camera appliance (example deployment).
+#
+#   one-time:   docker compose run --rm init     # ceremony-sim + enroll
+#   run:        docker compose up -d --build
+#   logs:       docker compose logs -f sealer
+#
+# Sealed output lands in ./archive on the host (a bind mount, NOT a docker
+# volume). Plaintext footage exists only in the container's /dev/shm (RAM).
+# Containers run as root so the passed-through /dev/video0 (root:root in the
+# container) is reliably accessible; archive files are therefore root-owned
+# on the host but world-readable.
+
+services:
+  # One-shot provisioning: simulated key ceremony + device enrollment.
+  # Idempotent — exits early if /state/device.key already exists.
+  init:
+    profiles: ["init"]
+    build: .
+    image: splitkey-cam:latest
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        if [ -f /config/state/device.key ]; then
+          echo "already enrolled — nothing to do"; exit 0
+        fi
+        sks ceremony-sim --community my-community --window-secs 86400 \
+            --windows 540 --threshold 3-of-5 --out /config/ceremony
+        cp /config/ceremony/manifest.skm /config/ceremony/admin.pub /config/
+        sealer --config /config/sealer.toml enroll
+        echo "init complete — review /config/ceremony/crk.secret handling for real deploys"
+    volumes:
+      - ./config:/config:z
+      - ./archive:/archive:z
+
+  # The appliance: motion (detection) + sealerd (sealing), supervised together.
+  sealer:
+    build: .
+    image: splitkey-cam:latest
+    restart: unless-stopped
+    # App at debug, dependencies kept at info (avoids tokio/mio noise).
+    # sealerd prefers RUST_LOG over the config's [log] level.
+    environment:
+      - RUST_LOG=info,sealerd=debug
+    devices:
+      - "/dev/video0:/dev/video0"
+    shm_size: "256m"            # tmpfs headroom for in-flight motion clips
+    volumes:
+      - ./config:/config:z
+      - ./archive:/archive:z
