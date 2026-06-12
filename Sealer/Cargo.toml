@@ -12,7 +12,7 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-license = "MIT OR Apache-2.0"   # repo README marks license TBD; matches its recommendation
+license = "MIT"   # decided; LICENSE file at repo root
 repository = "https://github.com/splitkey/splitkey"
 
 [workspace.dependencies]
