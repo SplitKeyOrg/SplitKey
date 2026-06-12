@@ -1,8 +1,8 @@
 # SplitKey
 
-**Recording without surveillance.**
+**Security without surveillance.**
 
-SplitKey lets a neighborhood, building, or small town run security cameras
+SplitKey lets a community run security cameras
 that *nobody* can secretly watch. Footage is encrypted the instant it leaves
 the lens. The only way to ever see it: a quorum of trusted community members
 — each holding printed paper key shares — agree to unlock **one specific
@@ -11,9 +11,6 @@ day**. Not the archive. Not a live feed. One day.
 The camera keeps custody of what happened. The community keeps control of
 who gets to see it.
 
-> **Custody, not control.** The footage exists for accountability — a break-in,
-> a hit-and-run, a dispute — without creating a tool for stalking, profiling,
-> or quiet mass surveillance.
 
 ---
 
