@@ -1,15 +1,13 @@
 # SplitKey
 
-**Security without surveillance.**
+**Recording Without Surveillance**
 
-SplitKey lets a community run security cameras
-that *nobody* can secretly watch. Footage is encrypted the instant it leaves
-the lens. The only way to ever see it: a quorum of trusted community members
-— each holding printed paper key shares — agree to unlock **one specific
-day**. Not the archive. Not a live feed. One day.
-
-The camera keeps custody of what happened. The community keeps control of
-who gets to see it.
+SplitKey is an open-source system that lets a community keep security camera
+recordings while preventing surveillance abuse. Using threshold cryptography
+(Shamir's Secret Sharing), footage is encrypted the instant it leaves the lens
+so that no single person can access it. A quorum of trusted community
+keyholders, each holding their own key share, must agree before any recording
+can be released.
 
 
 ---
