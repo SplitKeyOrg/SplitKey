@@ -24,6 +24,7 @@ fn ceremony_outputs_are_consistent() {
             "--keyholder", "carol",
             "--keyholder", "dave",
             "--keyholder", "erin",
+            "--no-pdf", // crypto consistency check — keep it font-independent
             "--out",
         ])
         .arg(&out)
@@ -81,7 +82,8 @@ fn keep_crk_writes_secret_for_dev() {
         .args([
             "new", "--community", "dev", "--epoch", "1", "--start", "2026-07-01",
             "--windows", "3", "--threshold", "2-of-3",
-            "--keyholder", "a", "--keyholder", "b", "--keyholder", "c", "--keep-crk", "--out",
+            "--keyholder", "a", "--keyholder", "b", "--keyholder", "c",
+            "--keep-crk", "--no-pdf", "--out",
         ])
         .arg(&out)
         .status()
@@ -98,4 +100,30 @@ fn keep_crk_writes_secret_for_dev() {
     let w = manifest.body.first_window + 1;
     let kp = kdf::derive_window_keypair(&crk, w);
     assert_eq!(manifest.pub_for_window(w).unwrap().0, &kp.public);
+}
+
+#[test]
+fn pdf_booklets_are_written_alongside_text() {
+    // The booklet font is embedded, so PDF output is always available.
+    let tmp = tempfile::tempdir().unwrap();
+    let out = tmp.path().join("epoch1");
+    let status = Command::new(env!("CARGO_BIN_EXE_ceremony"))
+        .args([
+            "new", "--community", "testers", "--epoch", "1", "--start", "2026-07-01",
+            "--windows", "8", "--threshold", "2-of-3",
+            "--keyholder", "alice", "--keyholder", "bob", "--keyholder", "carol", "--out",
+        ])
+        .arg(&out)
+        .status()
+        .unwrap();
+    assert!(status.success(), "ceremony new failed");
+
+    for h in ["alice", "bob", "carol"] {
+        let pdf = out.join("booklets").join(format!("{h}.pdf"));
+        let bytes = fs::read(&pdf).unwrap_or_else(|_| panic!("missing {h}.pdf"));
+        assert!(bytes.starts_with(b"%PDF"), "{h}.pdf is not a PDF");
+        assert!(bytes.len() > 1000, "{h}.pdf suspiciously small");
+        // the canonical text booklet is still written alongside the PDF
+        assert!(out.join("booklets").join(format!("{h}.txt")).exists());
+    }
 }

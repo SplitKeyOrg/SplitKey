@@ -64,6 +64,7 @@ async fn build_rig() -> Rig {
         out_dir: epoch_dir.clone(),
         keep_crk: false,
         ceremony_date: 0,
+        pdf: false, // this loop exercises the crypto, not the printed booklet
     })
     .unwrap();
 

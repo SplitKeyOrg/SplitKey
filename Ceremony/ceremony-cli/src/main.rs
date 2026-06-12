@@ -41,6 +41,9 @@ enum Cmd {
         /// DEV/SIM ONLY: also write crk.secret instead of destroying the CRK
         #[arg(long)]
         keep_crk: bool,
+        /// Skip the print-ready PDF booklets (text booklets are always written)
+        #[arg(long)]
+        no_pdf: bool,
     },
 }
 
@@ -57,7 +60,7 @@ fn main() -> Result<()> {
     match cli.cmd {
         Cmd::New {
             community, epoch, start, months, windows, window_hours, threshold,
-            keyholders, out, keep_crk,
+            keyholders, out, keep_crk, no_pdf,
         } => {
             let (t, n) = parse_threshold(&threshold)?;
             anyhow::ensure!(
@@ -88,6 +91,7 @@ fn main() -> Result<()> {
                 out_dir: out,
                 keep_crk,
                 ceremony_date,
+                pdf: !no_pdf,
             })
         }
     }

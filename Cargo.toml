@@ -31,3 +31,5 @@ serde_bytes = "0.11"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 object_store = { version = "0.12", features = ["aws"] }
 tempfile = "3"
+printpdf = "0.7"
+owned_ttf_parser = "0.25"

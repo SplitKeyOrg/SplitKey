@@ -16,6 +16,8 @@ anyhow = { workspace = true }
 clap = { workspace = true }
 hex = { workspace = true }
 serde_bytes = { workspace = true }
+printpdf = { workspace = true }
+owned_ttf_parser = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

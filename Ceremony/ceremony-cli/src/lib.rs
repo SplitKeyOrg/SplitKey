@@ -9,6 +9,8 @@ use sk_shares::{booklet, dates, LineCtx};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+pub mod pdf;
+
 pub struct NewParams {
     pub community_id: String,
     pub epoch: u16,
@@ -20,6 +22,8 @@ pub struct NewParams {
     pub out_dir: PathBuf,
     pub keep_crk: bool,
     pub ceremony_date: i64,
+    /// Also render print-ready `.pdf` booklets alongside the `.txt` ones.
+    pub pdf: bool,
 }
 
 fn write_0600(path: &Path, bytes: &[u8]) -> Result<()> {
@@ -56,6 +60,9 @@ pub fn run_new(p: &NewParams) -> Result<()> {
     }
     fs::create_dir_all(p.out_dir.join("booklets"))?;
 
+    // 0. Parse the embedded booklet font once, up front.
+    let font = if p.pdf { Some(pdf::load_font()?) } else { None };
+
     // 1–2. Admin signing key + CRK (CRK lives only in this function).
     let admin = SigKeypair::generate();
     let crk = sealer_crypto::random_32();
@@ -63,6 +70,12 @@ pub fn run_new(p: &NewParams) -> Result<()> {
     // 3. Derive + split every window; accumulate booklets in memory.
     let mut window_pubs = Vec::with_capacity(p.window_count as usize);
     let mut booklets: Vec<String> = vec![String::new(); n];
+    // Structured per-holder entries for PDF rendering (empty when --no-pdf).
+    let mut pdf_entries: Vec<Vec<pdf::Entry>> = if p.pdf {
+        (0..n).map(|_| Vec::with_capacity(p.window_count as usize)).collect()
+    } else {
+        Vec::new()
+    };
     for i in 0..p.window_count {
         let w = p.first_window + i;
         let secret = kdf::derive_window_secret(&crk, w);
@@ -76,6 +89,13 @@ pub fn run_new(p: &NewParams) -> Result<()> {
             let words = sk_shares::encode_words(share, &ctx);
             booklets[k].push_str(&booklet::format_line(w, p.window_secs, &words));
             booklets[k].push('\n');
+            if p.pdf {
+                pdf_entries[k].push(pdf::Entry {
+                    date: dates::label_for_window(w, p.window_secs),
+                    tag: format!("w{w}"),
+                    words,
+                });
+            }
         }
     }
 
@@ -97,7 +117,7 @@ pub fn run_new(p: &NewParams) -> Result<()> {
     fs::write(p.out_dir.join("admin.pub"), admin.public)?;
     write_0600(&p.out_dir.join("admin.key"), &admin.secret)?;
 
-    // 5. Booklets (header + lines).
+    // 5. Booklets (header + lines), text and — unless --no-pdf — print-ready PDF.
     let first_label = dates::label_for_window(p.first_window, p.window_secs);
     let last_label = dates::label_for_window(body.last_window, p.window_secs);
     for (k, name) in p.keyholders.iter().enumerate() {
@@ -112,6 +132,26 @@ pub fn run_new(p: &NewParams) -> Result<()> {
             p.out_dir.join("booklets").join(format!("{name}.txt")),
             format!("{header}{}", booklets[k]),
         )?;
+        if let Some(font) = &font {
+            let meta = pdf::BookletMeta {
+                community: &p.community_id,
+                epoch: p.epoch,
+                holder: name,
+                share_idx: k + 1,
+                n,
+                threshold: p.threshold_t,
+                window_hours: p.window_secs / 3600,
+                first_label: &first_label,
+                last_label: &last_label,
+            };
+            pdf::write_booklet_pdf(
+                &p.out_dir.join("booklets").join(format!("{name}.pdf")),
+                &meta,
+                &pdf_entries[k],
+                font,
+            )
+            .with_context(|| format!("rendering {name}.pdf"))?;
+        }
     }
 
     // 6. Self-check FROM DISK before the CRK goes away: re-combine t shares
@@ -145,11 +185,13 @@ pub fn run_new(p: &NewParams) -> Result<()> {
     println!(
         "ceremony complete: {} windows ({} .. {}), {} keyholders, threshold {}-of-{}\n\
          out: {}\n\
+         booklets/: <holder>{} per holder\n\
          self-check: {} sample windows re-combined from booklet files — OK\n\
          next: print + hand out booklets/, DELETE the booklet files,\n\
                enroll cameras with manifest.skm + admin.pub",
         p.window_count, first_label, last_label, n, p.threshold_t, n,
         p.out_dir.display(),
+        if p.pdf { ".txt + .pdf" } else { ".txt (PDF skipped)" },
         samples.len(),
     );
     Ok(())

@@ -51,15 +51,18 @@ maple-street-epoch1/
   admin.key           → community admin custody (signs future manifests);
                         0600, with a printed warning about where it goes
   booklets/
-    alice.txt  bob.txt  carol.txt  dave.txt  erin.txt
+    alice.txt  alice.pdf  bob.txt  bob.pdf  ...   (one .txt + one .pdf per holder)
 ```
+
+By default each holder gets both a `.txt` (canonical) and a print-ready
+`.pdf`. `--no-pdf` skips the PDFs.
 
 ## Booklet format (`booklets/<name>.txt`)
 
 Plain text, designed to be printed and then **deleted** (paper is the
-medium; the file is an intermediate). PDF/QR rendering is a later nicety —
-the text format is the canonical one and what `keeper-cli` parses directly
-in the sim.
+medium; the file is an intermediate). The text format is the canonical one
+and what `keeper-cli` parses directly in the sim; the PDF below is rendered
+from the same data for convenient printing.
 
 ```
 SplitKey keyholder booklet
@@ -74,11 +77,26 @@ One line per window: UTC date, window index, 14 words. The date column is
 what a human uses ("we're releasing footage from July 9th"); the window
 index is what tooling uses; the words are the share.
 
+## Booklet PDF (`booklets/<name>.pdf`)
+
+Print-ready rendering of the same lines: **DejaVu Sans Mono 8pt**, three
+columns per US-Letter page, narrow side margins and a wider top margin so a
+stapled booklet's binding never bites the text. Each window is one entry —
+its **date and window id in bold**, then the 14 words set fully justified to
+the column width (the entry's last line left as-is). Every page is topped by
+a plain bold title — `SplitKey share k/n for <community> — holder <name>` —
+so a stray sheet is identifiable, with a smaller sub-line carrying epoch,
+threshold, window range and page number.
+
+The font is vendored under `assets/fonts/` (open-licensed; see its `LICENSE`)
+and compiled into the binary with `include_bytes!`, so PDF output needs
+nothing installed on the ceremony machine and the file is self-contained.
+
 ## Explicitly out of scope (v1)
 
 - Share re-issuance / keyholder replacement mid-epoch (requires a new
   ceremony; the epoch model already assumes this).
 - HSM/air-gap attestation theatrics — the procedure doc handles process;
   the tool stays auditable and small.
-- Printing. `lpr booklets/alice.txt` is the deployment story until the
-  Keyholder app phase.
+- QR codes / per-holder cover pages in the PDF — the booklet PDF prints the
+  share lines and nothing fancier.
