@@ -1,0 +1,3 @@
+# Build output from build-linux.sh — rebuilt on demand, never committed.
+/splitkey-sealer-x86_64-linux/
+*.tar.gz
