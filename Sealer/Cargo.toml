@@ -1,0 +1,37 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/sks-format",
+    "crates/sealer-crypto",
+    "crates/sealer-chain",
+    "crates/sealer-keys",
+    "crates/sealer-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"   # repo README marks license TBD; matches its recommendation
+repository = "https://github.com/splitkey/splitkey"
+
+[workspace.dependencies]
+sks-format = { path = "crates/sks-format" }
+sealer-crypto = { path = "crates/sealer-crypto" }
+sealer-chain = { path = "crates/sealer-chain" }
+sealer-keys = { path = "crates/sealer-keys" }
+
+libsodium-sys-stable = "1.22"
+serde = { version = "1", features = ["derive"] }
+serde_bytes = "0.11"
+ciborium = "0.2"
+thiserror = "2"
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+serde_json = "1"
+hex = "0.4"
+tempfile = "3"
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1

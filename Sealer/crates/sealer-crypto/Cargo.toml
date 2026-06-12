@@ -1,0 +1,11 @@
+[package]
+name = "sealer-crypto"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+libsodium-sys-stable = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_bytes = { workspace = true }

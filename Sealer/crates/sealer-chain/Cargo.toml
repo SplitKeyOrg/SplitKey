@@ -1,0 +1,11 @@
+[package]
+name = "sealer-chain"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+sks-format = { workspace = true }
+sealer-crypto = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
