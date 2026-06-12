@@ -75,15 +75,12 @@ different capture frontend; the Pi port later is only a build target +
   the lot. End-to-end proof of the whole SplitKey concept with no GUI apps
   yet — **this is the milestone that makes the project real to outsiders.**
 
-## Phase 5 — Reach (ongoing, prioritize by demand)
-
+## Phase 5
 - RTSP source mode (`retina`), fMP4 muxing → seal ONVIF cameras.
-- Windows sidecar build + service wrapper.
 - SFTP/HTTP sinks, multi-sink fan-out.
 - QR actions (probe + manifest-announce first).
-- RFC 3161 anchoring; transparency-log anchoring.
-- Luckfox/RV1106 port (musl static confirmed working on stock Buildroot).
-- OpenIPC packaging + community engagement — postponed (low priority).
+
+
 
 ## Phase 6 — Hardening & evidentiary posture
 
@@ -92,6 +89,13 @@ different capture frontend; the Pi port later is only a build target +
 - Reproducible-build attestation; signed releases.
 - TPM/secure-element device key support.
 - PQ-hybrid suite design (X25519+ML-KEM) behind suite ID.
+
+
+# Beyond phase
+- Windows sidecar build + service wrapper.
+- RFC 3161 anchoring; transparency-log anchoring.
+- Luckfox/RV1106 port (musl static confirmed working on stock Buildroot).
+- OpenIPC packaging + community engagement — postponed (low priority).
 
 ## Dependency callouts (work that lives outside Sealer but gates it)
 

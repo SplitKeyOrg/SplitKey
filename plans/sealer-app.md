@@ -154,6 +154,13 @@ Consider the various outputs of the camera and how we will access those from win
 linux, wire, or possibly IP. Essentialy, input to the Sealer.
 
 
+# Demo deployments
+
+https://github.com/Motion-Project/motion
+Kerberos.io
+Frigate https://frigate.video/
+
+
 # Goal
 
 Work inside the Sealer/ directory.

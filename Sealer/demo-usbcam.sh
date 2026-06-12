@@ -21,15 +21,21 @@ CAM_SIZE=${CAM_SIZE:-1920x1080}
 CAM_FPS=${CAM_FPS:-30.000030}
 DURATION=${DURATION:-20}
 
+# Pick up a rustup/cargo install that login-only shells put on PATH.
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+
 command -v ffmpeg >/dev/null || { echo "ffmpeg required: brew install ffmpeg"; exit 1; }
-cargo build --release -p sealer-cli -p sealerd 2>/dev/null
+command -v cargo  >/dev/null || { echo "cargo required: install Rust from https://rustup.rs"; exit 1; }
+echo "Building sealer-cli + sealerd (release)…"
+cargo build --release -p sealer-cli -p sealerd
 BIN=target/release
 
 VCODEC="h264_videotoolbox -realtime true"
 ffmpeg -hide_banner -encoders 2>/dev/null | grep -q h264_videotoolbox || VCODEC="libx264 -preset veryfast -tune zerolatency"
 
-D=$(mktemp -d)
-trap 'rm -rf "$D"' EXIT
+#D=$(mktemp -d)
+#trap 'rm -rf "$D"' EXIT
+D=./tmp
 say() { printf '\n\033[1m== %s ==\033[0m\n' "$*"; }
 
 say "1. Key ceremony (simulated): daily windows, 3-of-5"
